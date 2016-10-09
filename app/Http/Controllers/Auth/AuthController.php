@@ -49,7 +49,7 @@ class AuthController extends Controller
     }
     public function login()
     {
-        dd(1);
+
     }
     /**
      * Get a validator for an incoming registration request.
