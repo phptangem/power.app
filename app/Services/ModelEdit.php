@@ -1,8 +1,11 @@
 <?php
 namespace App\Services;
 
-use Exception;
+use Exception,Closure,Validator;
 use Illuminate\Database\Eloquent\Model as Eloquent;
+
+use Symfony\Component\HttpFoundation\File\UploadedFile;
+
 class ModelEdit extends Services
 {
     /*
@@ -43,7 +46,43 @@ class ModelEdit extends Services
         }
         return false;
     }
-
+    /*
+    * 作用:修改数据
+    * 参数:$model 要修改的Model对象或类名
+    *      $input 要输入的参数默认全部请求参数
+    *      $option 要修改的参数名,默认全部
+    *      $before 写入参数数据之前回调处理，用于额外添加修改数据
+    *      $after  写入修改数据之后回调处理，用于关联修改处理
+    * 返回值:bool (通过true,不通过false)
+    */
+    public function edit($model, array $input = [], array $option = [], Closure $before = null, Closure $after = null)
+    {
+        $data = $this->validation($model,$input,$option);
+        if($data === false){//验证失败
+            return false;
+        }
+        if($before && $before($data, $this, $model) === false){
+            return false;
+        }
+        //上传处理
+        foreach($data as &$item){
+            if($item instanceof UploadedFile){
+                $item = $this->upload($item);
+                if($item === false){//上传失败
+                    return false;
+                }
+            }
+        }
+        if($model instanceof Eloquent){
+            $model->update($data);
+        }else{
+            $model = $model::create($data);
+        }
+        if($after && $after($model,$this) === false){
+            return false;
+        }
+        return $model;
+    }
     /*
     * 作用:获取Model的类名
     * 参数:$model Model对象或类名
@@ -68,7 +107,7 @@ class ModelEdit extends Services
     */
     public function getRules($modelClass)
     {
-        $this->getModelStaticAttribute($modelClass, '_RULES');
+        return $this->getModelStaticAttribute($modelClass, '_RULES');
     }
 
     /*
@@ -79,7 +118,7 @@ class ModelEdit extends Services
     */
     public function getMessages($modelClass)
     {
-        $this->getModelStaticAttribute($modelClass, '_MESSAGES');
+        return  $this->getModelStaticAttribute($modelClass, '_MESSAGES');
     }
 
     /*
@@ -91,6 +130,25 @@ class ModelEdit extends Services
     public function getUnifyMessages($modelClass)
     {
         return $this->getModelStaticAttribute($modelClass, '_UNIFY_MESSAGES');
+    }
+    /*
+    * 作用:上传处理
+    * 参数:$file 上传对象
+    * 
+    * 返回值:bool str(成功 url 失败false)
+    */
+    public function upload(UploadedFile $file)
+    {
+        $urlPath = '/attach/files/'.date('Y/m/d');
+        $directory = public_path($urlPath);
+        do{
+            $name = uniqid(md5(microtime())).$file->getClientOriginalExtension();
+        }while(file_exists($directory.DIRECTORY_SEPARATOR.$name));
+        if($target = $file->move($directory,$name)){
+            return str_replace('\\', '/', Request::getSchemeAndHttpHost().$urlPath.$target->getBasename());
+        }
+
+        return $this->setError('upload', $file->getClientOriginalName().'文件上传失败');
     }
     /*
     * 作用:获取Model的静态属性

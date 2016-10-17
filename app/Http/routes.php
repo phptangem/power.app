@@ -15,10 +15,11 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-
+Route::resource('test','TestController');
 Route::group(['middleware' => ['web']], function () {
     Route::group(['namespace' => 'Auth'], function(){
         Route::get('login.html', 'AuthController@showLoginForm')->name('auth.login');
         Route::post('login', 'AuthController@login');
     });
 });
+

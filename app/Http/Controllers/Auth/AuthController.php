@@ -2,12 +2,13 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Services\ModelEdit;
 use App\User;
-use Validator;
+use Validator,Auth,Input;
 use App\Http\Controllers\Controller;
 use Illuminate\Foundation\Auth\ThrottlesLogins;
 use Illuminate\Foundation\Auth\AuthenticatesAndRegistersUsers;
-
+use App\Models\Admin\Entity as Admin;
 class AuthController extends Controller
 {
     /*
@@ -49,7 +50,17 @@ class AuthController extends Controller
     }
     public function login()
     {
-
+        $service = new ModelEdit();
+        Admin::$_RULES['username'] = str_replace('unique:admin','',Admin::$_RULES['username']);
+        $credentials = $service->validation(Admin::class,Input::all(),['username', 'password']);
+        if($credentials === false){
+            return $service->prompt('验证失败');
+        }
+        if(Auth::attempt($credentials)){
+            return prompt('登陆成功', 'success', Input::get('redirect', auth()->user()->index()));
+        }else{
+            return prompt('账号或密码错误', 'error');
+        }
     }
     /**
      * Get a validator for an incoming registration request.
