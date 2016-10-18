@@ -57,7 +57,9 @@ class AuthController extends Controller
             return $service->prompt('验证失败');
         }
         if(Auth::attempt($credentials)){
-            return prompt('登陆成功', 'success', Input::get('redirect', auth()->user()->index()));
+//            return prompt('登陆成功', 'success', Input::get('redirect', auth()->user()->index()));
+            return redirect()->route('dashboard.index');
+//            return prompt('登陆成功', 'success', Input::get('redirect', auth()->user()->index()));
         }else{
             return prompt('账号或密码错误', 'error');
         }

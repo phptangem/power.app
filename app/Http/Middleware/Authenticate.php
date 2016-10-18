@@ -2,7 +2,7 @@
 
 namespace App\Http\Middleware;
 
-use Closure;
+use Closure,Request,Route;
 use Illuminate\Support\Facades\Auth;
 
 class Authenticate
@@ -18,10 +18,14 @@ class Authenticate
     public function handle($request, Closure $next, $guard = null)
     {
         if (Auth::guard($guard)->guest()) {
-            if ($request->ajax() || $request->wantsJson()) {
-                return response('Unauthorized.', 401);
-            } else {
-                return redirect()->guest('login');
+            $query = [];
+            if( !Route::is('login', 'logout')){
+                $query['redirect'] = $request->fullUrl();
+            }
+            if($request->ajax()){
+                prompt('未登录，或登录超时', 'logon_failure', route('login', $query));
+            }else{
+                return redirect()->route('login', $query);
             }
         }
 

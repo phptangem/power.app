@@ -31,3 +31,6 @@ if(!function_exists('prompt')){
         }
     }
 }
+if(!function_exists('')){
+
+}

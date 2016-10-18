@@ -16,7 +16,7 @@ class Menu extends Model
     //获取指定人员可用菜单
     public static function userMenus(Admin $admin)
     {
-        $query = self::leftJoin('power_menu_level','power_menu_level.power_menu_id', '=', 'power_menu.power_menu_id')
+        return self::leftJoin('power_menu_level','power_menu_level.power_menu_id', '=', 'power_menu.power_menu_id')
             ->where('power_menu_level.power_menu_group_id', '=', $admin->menu_group_id)
             ->where(function($query) use($admin){
                 $query->orWhere('power_menu.power_item_id', '=', '0')
@@ -24,13 +24,12 @@ class Menu extends Model
                         Item::addItemWhere($query, $admin);
                     })->orWhereIn('power_menu.power_item_id', function($query){
                         $query->from('power_item')
-                            ->where('status', '!=', 'enable')
+                            ->where('status', '=', 'enable')
                             ->select('power_item_id');
                     });
             })
             ->with('item')
-            ->orderBy('power_menu_level.sort','desc');
-//            ->get(['power_menu.*', 'power_menu_level.id as level_id','power_menu_level.parent_id']);
-        dd($query->toSql(),1);
+            ->orderBy('power_menu_level.sort','desc')
+            ->get(['power_menu.*', 'power_menu_level.id as level_id','power_menu_level.parent_id']);
     }
 }

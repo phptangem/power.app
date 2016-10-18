@@ -17,9 +17,25 @@ Route::get('/', function () {
 
 Route::resource('test','TestController');
 Route::group(['middleware' => ['web']], function () {
-    Route::group(['namespace' => 'Auth'], function(){
-        Route::get('login.html', 'AuthController@showLoginForm')->name('auth.login');
+    /*=====================无需登陆操作 start======================*/
+    Route::group(['middleware'=>'guest','namespace'=>'Auth'], function(){
+        Route::get('login.html', 'AuthController@showLoginForm')->name('login');
         Route::post('login', 'AuthController@login');
     });
-});
+    /*=====================无需登陆操作 end========================*/
 
+    /*=====================需要登陆操作 start======================*/
+    Route::group(['middleware' => 'auth'], function(){
+        Route::get('logout.html','Auth\\AuthController@logout')->name('logout');
+        Route::get('dashboard','DashboardController@index')->name('dashboard.index');
+        /*================权限相关 start====================*/
+        /*================权限相关 end======================*/
+        /*================合伙人相关 start====================*/
+        Route::group(['namespace' => 'CityPartner'], function(){
+            Route::get('city/partner/lists.html', 'PartnerController@lists');
+        });
+        /*================合伙人相关 end======================*/
+
+    });
+    /*=====================需要登陆操作 start======================*/
+});
